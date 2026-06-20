@@ -1,0 +1,61 @@
+
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  overflow-x: hidden;
+}
+
+.sobre-conteudo {
+  transition: all .5s ease;
+}
+
+.sobre-conteudo:hover {
+  transform: scale(1.02);
+  box-shadow:
+  0 0 15px rgba(168,85,247,.3),
+  0 0 40px rgba(168,85,247,.2),
+  0 0 80px rgba(168,85,247,.1);
+  animation: purpleFlow 3s infinite;
+}
+
+
+@keyframes purpleFlow {
+  0% {
+    box-shadow:
+      -20px 0 30px rgba(168,85,247,.4),
+       20px 0 10px rgba(168,85,247,.1);
+  }
+
+  50% {
+    box-shadow:
+       20px 0 30px rgba(168,85,247,.4),
+      -20px 0 10px rgba(168,85,247,.1);
+  }
+
+  100% {
+    box-shadow:
+      -20px 0 30px rgba(168,85,247,.4),
+       20px 0 10px rgba(168,85,247,.1);
+  }
+}
