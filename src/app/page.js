@@ -20,30 +20,35 @@ export default function Home() {
 
   useGSAP(
     () => {
-      // pina o HERO enquanto a seção cresce
-      ScrollTrigger.create({
-        trigger: heroRef.current,
-        start: "top top",
-        end: "+=120%",
-        pin: true,
-        pinSpacing: false,   // deixa a seção subir por cima sem empurrar
+      const mm = gsap.matchMedia();
+
+      // SÓ desktop (>= 1024px): pin do hero + scale da seção
+      mm.add("(min-width: 1024px)", () => {
+        ScrollTrigger.create({
+          trigger: heroRef.current,
+          start: "top top",
+          end: "+=120%",
+          pin: true,
+          pinSpacing: false,
+        });
+
+        gsap.fromTo(
+          growRef.current,
+          { scale: 0 },
+          {
+            scale: 1,
+            ease: "sine.out",
+            scrollTrigger: {
+              trigger: growRef.current,
+              start: "top bottom",
+              end: "+=90%",
+              scrub: 0.9,
+            },
+          }
+        );
       });
 
-      // a seção cresce do scale 0 ao 1
-      gsap.fromTo(
-        growRef.current,
-        { scale: 0 },
-        {
-          scale: 1,
-          ease: "sine.out",
-          scrollTrigger: {
-            trigger: growRef.current,
-            start: "top bottom",
-            end: "+=90%",
-            scrub: 0.9,
-          },
-        }
-      );
+      // No mobile: nada. O matchMedia limpa tudo sozinho e o layout fica normal.
     },
     { scope: container }
   );
@@ -52,17 +57,17 @@ export default function Home() {
     <main ref={container} className="bg-[#0a0a0a] overflow-x-hidden">
       <Navbar />
 
-      {/* Hero — pinado pelo GSAP (sem sticky CSS) */}
+      {/* Hero */}
       <div ref={heroRef} className="h-screen w-full z-0">
         <SectionHero />
       </div>
 
-      {/* Seção que cresce */}
+      {/* Seção (cresce só no desktop; no mobile aparece normal) */}
       <div ref={growRef} className="relative z-10 origin-center bg-[#0a0a0a]">
         <SkillSection />
       </div>
 
-      {/* Resto rola normal */}
+      {/* Resto */}
       <div className="relative z-10 bg-[#0a0a0a]">
         <Sobre />
         <PrincipaisTrabalhos />
