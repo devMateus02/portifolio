@@ -3,9 +3,10 @@ import { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
+const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
+const TRAIL = isMobile ? 20 : 60;   // mobile leve, desktop completo
 const RADIUS = 0.12;
 const SOFT = 0.10;
-const TRAIL = 60;
 const LERP = 0.14;
 
 const vertex = /* glsl */ `
@@ -243,14 +244,16 @@ export default function FluidPortrait({
   revealSrc = "/hero_base.png",
   debug = false,
 }) {
+  const mobile = typeof window !== "undefined" && window.innerWidth < 1024;
+
   return (
     <Canvas
       orthographic
-      gl={{ alpha: true, antialias: true }}
+      gl={{ alpha: true, antialias: !mobile }}     // antialias só no desktop
       style={{ width: "100%", height: "100%", display: "block" }}
-      dpr={[1, 2]}
+      dpr={mobile ? 1 : [1, 2]}                     // dpr 1 no mobile, até 2 no desktop
     >
       <Plane baseSrc={baseSrc} revealSrc={revealSrc} debug={debug} />
     </Canvas>
   );
-} 
+}
