@@ -108,7 +108,7 @@ export default function Servicos() {
           05
         </span>
            <div
-        className="fixed inset-0 pointer-events-none w-[100vw]"
+        className="absolute inset-0 pointer-events-none w-[100vw]"
         style={{
           backgroundImage:
             "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",
@@ -116,7 +116,7 @@ export default function Servicos() {
         }}
       />
 
-        <h2 className="text-5xl font-medium text-white">Como eu ajudo</h2>
+        <h2 className="text-4xl  md:text-5xl font-medium text-white">Como eu ajudo</h2>
 
         <p className="text-zinc-400 max-w-2xl mt-4">
           Soluções digitais criadas para transformar ideias em produtos,
@@ -164,7 +164,7 @@ export default function Servicos() {
                 hovered={hoveredCard === index}
               />
 
-              <h3 className="text-2xl font-semibold text-white mt-8">
+              <h3 className="text-[20px] font-semibold text-white mt-8">
                 {service.title}
               </h3>
 

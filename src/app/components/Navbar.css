@@ -35,3 +35,219 @@ nav button:before {
 nav button:hover:before {
   transform: translateX(15em);
 }
+
+nav h3, h6{
+  font-family: "Google Sans Flex";
+  font-weight: 450;
+  line-height: 1.35;
+  letter-spacing: -2%;
+}
+
+
+nav h3{
+  font-size: clamp(1.5em, 3vw, 3rem); 
+}
+
+nav h6{
+  font-size: clamp(1em, 1.25vw, 1.5rem); 
+}
+
+nav p{
+  text-transform: uppercase;
+}
+
+nav{ 
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index:10000;
+}
+
+
+.nav-logo, .menu-logo {
+  position: absolute;
+ 
+}
+
+.nav-logo{
+  top: 0;
+  left: 3rem;
+}
+
+.menu-logo{
+  top: 5rem;
+  left: 5rem;
+}
+
+.nav-toggle{
+  position:absolute;
+  top: 2rem;
+  right: 2rem;
+  color: #ffffff;
+  cursor: pointer;
+  z-index: 10000000;
+  padding: .5rem;
+}
+
+.nav-logo, .nav-toggle{
+  padding: 0.5rem;
+  pointer-events: all;
+}
+
+.nav-toggle-menu{
+color: #ffffff;  
+}
+
+.nav-toggle-close{
+  position: absolute;
+  top:0.5rem;
+  right: 0.5rem;
+  color: rgb(83, 83, 83);
+ opacity: 0;
+} 
+
+.menu{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100svh;
+  padding: 2.5rem;
+  display: flex;
+  gap: 2rem;
+  color: #ffffff;
+  pointer-events: none;
+  z-index: 1000000;
+
+}
+
+.menu.is-open{
+  pointer-events: all;
+}
+
+.menu-bg-svg{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index:1;
+}
+
+.menu-logo{
+  opacity: 0;
+  padding: 0.5rem;
+  z-index: 10000;
+}
+
+.logo-mobile{
+  display: none;
+}
+
+.menu-col{
+  flex:1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  z-index: 100000;
+  
+
+}
+
+
+
+.menu-col-links a {
+  text-decoration: none;
+  color: #ffffff;
+  font-family: "Boldonse", system-ui;
+  font-size: clamp(2.5rem,5vw,5rem);
+  line-height: 1.35;
+  display: block;
+  width: max-content;
+  overflow:visible;
+  z-index: 1000000;
+  margin-left: 5rem;
+}
+
+.menu-col p {
+  color:#ffffff;
+  margin-bottom: 1rem;
+}
+
+.menu a .char, .menu-col h3, .menu-col h6, .menu-col p{
+  will-change: transform, opacity;
+}
+
+@media (max-width:1000px) {
+
+
+  .menu{
+    flex-direction: column-reverse;
+  }
+
+  .menu-logo{
+    width: 60px;
+    height: 90px;
+   top: 0;
+   left: 2rem;
+  }
+
+  .logo-desktop{
+    display: none;
+  }
+
+  .logo-mobile{
+    z-index: 10000000;
+    display: block;
+  }
+
+  .menu-col-links{
+    align-items: start;
+    justify-content: end;
+    margin-top: 150px;
+  }
+   .menu-col-links a{
+    margin-left: 0;
+   }
+
+  .menu-col-info{
+    height: 50px;
+    font-size: .8em;
+
+  }
+
+  .menu-col-links a{
+    flex:1;
+    font-size: 2rem;
+  }
+}
+
+.menu-col-links a {
+  position: relative;   /* adiciona isto à sua regra existente */
+}
+
+.menu-col-links a::after {
+  content: "";
+  position: absolute;
+  right: -1.2em;
+  top: 50%;
+  width: 0.4em;
+  height: 0.4em;
+  margin-top: -0.2em;
+  border-radius: 9999px;
+  background: #aa1bfd;
+  opacity: 0;
+  transform: scale(0);
+  box-shadow: 0 0 20px rgba(170, 27, 253, 0.6);
+  pointer-events: none;
+}
+
+.menu-col-links a.link-hover::after {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.3s, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}

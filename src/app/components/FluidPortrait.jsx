@@ -5,7 +5,7 @@ import * as THREE from "three";
 
 const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
 const TRAIL = isMobile ? 20 : 60;   // mobile leve, desktop completo
-const RADIUS = 0.12;
+const RADIUS = isMobile ?0.06 :0.10;
 const SOFT = 0.10;
 const LERP = 0.14;
 
@@ -92,34 +92,40 @@ function Plane({ baseSrc, revealSrc, debug }) {
 
   // texturas de texto (refeitas no resize)
   const textRef = useRef({ fill: null, stroke: null });
+
   function buildText(W, H) {
-    const mk = (mode) => {
-      const cv = document.createElement("canvas");
-      cv.width = W; cv.height = H;
-      const c = cv.getContext("2d");
-      const fs = Math.min(H * 0.20, 150);
-      c.font = `750 ${fs}px system-ui, sans-serif`;
-      c.textBaseline = "top";
-      if (mode === "fill") c.fillStyle = "#ffffff";
-      else { c.strokeStyle = "#aa1bfd"; c.lineWidth = 2; }
+  const mob = W < 1024;
+  const mk = (mode) => {
+    const cv = document.createElement("canvas");
+    cv.width = W; cv.height = H;
+    const c = cv.getContext("2d");
+    // escala pela largura no mobile (evita fonte gigante em tela estreita)
+    const fs = mob
+      ? Math.min(W * 0.11, H * 0.10, 64)
+      : Math.min(H * 0.20, 150);
+    c.font = `750 ${fs}px system-ui, sans-serif`;
+    c.textBaseline = "top";
+    if (mode === "fill") c.fillStyle = "#ffffff";
+    else { c.strokeStyle = "#aa1bfd"; c.lineWidth = 2; }
 
-      // MATEUS — cima-esquerda
-      c.textAlign = "left";
-      mode === "fill" ? c.fillText("MATEUS", W * 0.03, H * 0.28) : c.strokeText("MATEUS", W * 0.03, H * 0.28);
+    const yTop = mob ? H * 0.20 : H * 0.28;
+    const yBot = mob ? H * 0.30 : H * 0.72;
 
-      // CELESTINO — baixo-direita
-      c.textAlign = "right";
-      mode === "fill" ? c.fillText("CELESTINO", W * 0.97, H * 0.72) : c.strokeText("CELESTINO", W * 0.97, H * 0.72);
+    c.textAlign = "left";
+    mode === "fill" ? c.fillText("MATEUS", W * 0.05, yTop) : c.strokeText("MATEUS", W * 0.05, yTop);
 
-      const t = new THREE.CanvasTexture(cv);
-      t.minFilter = THREE.LinearFilter; t.generateMipmaps = false;
-      return t;
-    };
-    textRef.current.fill?.dispose?.();
-    textRef.current.stroke?.dispose?.();
-    textRef.current.fill = mk("fill");
-    textRef.current.stroke = mk("stroke");
-  }
+    c.textAlign = "right";
+    mode === "fill" ? c.fillText("CELESTINO", W * 0.95, yBot) : c.strokeText("CELESTINO", W * 0.95, yBot);
+
+    const t = new THREE.CanvasTexture(cv);
+    t.minFilter = THREE.LinearFilter; t.generateMipmaps = false;
+    return t;
+  };
+  textRef.current.fill?.dispose?.();
+  textRef.current.stroke?.dispose?.();
+  textRef.current.fill = mk("fill");
+  textRef.current.stroke = mk("stroke");
+}
 
   const uniforms = useMemo(() => ({
     uBase: { value: null },
@@ -183,17 +189,18 @@ const parallax = useRef({ x: 0, y: 0 });
       lastSize.current = { w: W, h: H };
     }
 
-   const ir = tex.w / tex.h;
-    const dh = Math.min(H * 1.25, 1260);
-    const dw = dh * ir;
-    const dx = (W - dw) / 2;
-    const dyTop = (H - dh) / 2 + 70;
-
+  const ir = tex.w / tex.h;
+const mob = W < 1024;
+// no mobile limita pela LARGURA pra não estourar
+const dw = mob ? Math.min(W * 1.6, H * ir * 1.2) : Math.min(H * 1.25, 1260) * ir;
+const dh = dw / ir;
+const dx = (W - dw) / 2 + (mob ? 50 :0);
+const dyTop = (H - dh) / 2 + (mob ? 90 : 70);
    
    // parallax só quando o mouse já está na tela
     const PARALLAX = 25;
     let targetX = 0, targetY = 0;
-    if (mouse.current.inside) {
+    if (!mob && mouse.current.inside) {
       targetX = (mouse.current.x / W - 0.5) * 2 * PARALLAX;
       targetY = (mouse.current.y / H - 0.5) * 1 * PARALLAX;
     }

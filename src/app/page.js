@@ -18,43 +18,37 @@ export default function Home() {
   const heroRef = useRef(null);
   const growRef = useRef(null);
 
-  useGSAP(
+ useGSAP(
     () => {
       const mm = gsap.matchMedia();
 
-      // SÓ desktop (>= 1024px): pin do hero + scale da seção
       mm.add("(min-width: 1024px)", () => {
-        ScrollTrigger.create({
-          trigger: heroRef.current,
-          start: "top top",
-          end: "+=120%",
-          pin: true,
-          pinSpacing: false,
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: "top top",
+            end: "+=100%",        // toda a animação dura 1 tela de scroll
+            scrub: 0.9,
+            pin: true,            // pina o hero durante a animação inteira
+            pinSpacing: false,
+            anticipatePin: 1,
+          },
         });
 
-        gsap.fromTo(
+        // a seção cresce dentro dessa mesma janela pinada
+        tl.fromTo(
           growRef.current,
           { scale: 0 },
-          {
-            scale: 1,
-            ease: "sine.out",
-            scrollTrigger: {
-              trigger: growRef.current,
-              start: "top bottom",
-              end: "+=90%",
-              scrub: 0.9,
-            },
-          }
+          { scale: 1, ease: "sine.out" },
+          0   // começa no início da timeline
         );
       });
-
-      // No mobile: nada. O matchMedia limpa tudo sozinho e o layout fica normal.
     },
     { scope: container }
   );
 
   return (
-    <main ref={container} className="bg-[#0a0a0a] overflow-x-hidden">
+    <main ref={container} className="bg-grid relative bg-[#0a0a0a] overflow-x-hidden">
       <Navbar />
 
       {/* Hero */}

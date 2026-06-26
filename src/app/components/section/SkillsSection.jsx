@@ -216,7 +216,7 @@ export default function SkillsSection() {
         {/* ── LEFT ── */}
         <div>
           {/* Heading */}
-          <h2 className="text-6xl font-black leading-none uppercase tracking-tight">
+          <h2 className="text-4xl md:text-6xl font-black leading-none uppercase tracking-tight">
             MINHAS
             <span className="text-transparent block bg-gradient-to-r from-purple-400 via-purple-500 to-fuchsia-500 bg-clip-text text-transparent  ">
               SKILLS

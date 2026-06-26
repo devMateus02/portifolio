@@ -1,96 +1,229 @@
 "use client";
 
+import { useRef, useState } from "react";
 import Link from "next/link";
 import "./Navbar.css";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { SplitText } from "gsap/SplitText";
+
+gsap.registerPlugin(SplitText, useGSAP);
+
+// paths do morph do SVG (ajuste com os SEUS valores reais)
+const OPEN_HIDDEN = "M1131,0 Q565.5,0 0,0 L0,0 L1131,0 Z";
+const OPEN_BULGE  = "M1131,0 Q565.5,400 0,0 L0,500 L1131,500 Z";
+const OPEN_FULL   = "M1131,0 Q565.5,0 0,0 L0,861 L1131,861 Z";
+
+const CLOSE_START  = "M1131,0 Q565.5,0 0,0 L0,861 L1131,861 Z";   // tela cheia
+const CLOSE_BULGE  = "M1131,400 Q565.5,300 0,400 L0,861 L1131,861 Z"; // estufa pra baixo
+const CLOSE_HIDDEN = "M1131,861 Q565.5,861 0,861 L0,861 L1131,861 Z"; // some no fundo
 
 export default function Navbar() {
+  const container = useRef(null);
+  const isOpen = useRef(false);
+  const isAnimating = useRef(false);
+  const splits = useRef([]);
+  const [open, setOpen] = useState(false);
+
+  useGSAP(
+    () => {
+      const menuBg = container.current.querySelector("#menu-path");
+
+      // estado inicial
+      gsap.set("#menu-path", { attr: { d: OPEN_HIDDEN } });
+
+      // quebra cada link em chars
+      splits.current = [];
+      const menuLinks = gsap.utils.toArray(".menu-col-links a");
+      menuLinks.forEach((link) => {
+        const split = SplitText.create(link, { type: "chars", charsClass: "char" });
+        splits.current.push(split);
+        gsap.set(split.chars, { opacity: 0, x: "750%" });
+      });
+
+      
+
+      gsap.set(".menu-col-info p, .menu-col-info h3, .menu-col-info h6", { opacity: 0, y: 100 });
+
+
+
+      // hover elástico + bolinha nos links
+      const linkEls = gsap.utils.toArray(".menu-col-links a");
+      const handlers = [];
+
+      linkEls.forEach((link, idx) => {
+        const chars = splits.current[idx].chars;
+
+       const enter = () => {
+          gsap.to(chars, {
+            x: 20,
+            duration: 1,
+            ease: "elastic.out(1, 0.3)",
+            stagger: 0.02,
+            overwrite: "auto",   // mata animações conflitantes nos mesmos chars
+          });
+          link.classList.add("link-hover");
+        };
+        const leave = () => {
+          gsap.to(chars, {
+            x: 0,
+            duration: 0.6,
+            ease: "elastic.out(1, 0.4)",
+            stagger: 0.02,
+            overwrite: "auto",   // idem
+          });
+          link.classList.remove("link-hover");
+        };
+
+        link.addEventListener("mouseenter", enter);
+        link.addEventListener("mouseleave", leave);
+        handlers.push({ link, enter, leave });
+      });
+
+      return () => {
+        handlers.forEach(({ link, enter, leave }) => {
+          link.removeEventListener("mouseenter", enter);
+          link.removeEventListener("mouseleave", leave);
+        });
+      };
+    },
+    { scope: container }
+
+
+
+    
+  );
+
+  const openMenu = () => {
+    const menuLinksChars = splits.current.flatMap((s) => s.chars);
+
+    document.querySelector(".menu")?.classList.add("is-open");
+
+    gsap.to(".nav-toggle-menu", { duration: 0.25, opacity: 0, ease: "none" });
+    gsap.to(".nav-toggle-close", { duration: 0.25, opacity: 1, ease: "none", delay: 0.25 });
+    gsap.to(".nav-logo", { duration: 0.55, opacity: 0, ease: "none", delay:0.25 });
+
+
+    const tl = gsap.timeline({
+      onComplete: () => { isAnimating.current = false; },
+    });
+
+    tl.to("#menu-path", { duration: 0.5, attr: { d: OPEN_BULGE }, ease: "power4.in" })
+      .to("#menu-path", { duration: 0.5, attr: { d: OPEN_FULL }, ease: "power4.out" })
+      .to(".menu-logo", { duration: 0.5, opacity: 1, ease: "none" }, "-=0.075")
+      
+      .to(
+        ".menu-col-info p, .menu-col-info h3, .menu-col-info h6",
+        { duration: 0.75, opacity: 1, y: 0, ease: "power3.out", stagger: 0.075 },
+        "-=0.35"
+      )
+      .to(
+        menuLinksChars,
+        { duration: 1.5, x: "0%", ease: "elastic.out(1, 0.25)", stagger: 0.01 },
+        0.45
+      )
+      .to(
+        menuLinksChars,
+        { duration: 0.75, opacity: 1, ease: "power2.out", stagger: 0.01 },
+        0.45
+      );
+  };
+
+  const closeMenu = () => {
+    gsap.set("#menu-path", { attr: { d: CLOSE_START } });
+
+    gsap.to(".nav-toggle-close", { duration: 0.3, opacity: 0, ease: "none" });
+    gsap.to(".nav-toggle-menu", { duration: 0.3, opacity: 1, ease: "none", delay: 0.25 });
+    gsap.to(".nav-logo", { duration: 0.3, opacity: 1, ease: "none", delay: 0.25 });
+
+    const tl = gsap.timeline({
+      onComplete: () => {
+        document.querySelector(".menu")?.classList.remove("is-open");
+        gsap.set("#menu-path", { attr: { d: OPEN_HIDDEN } });
+        splits.current.forEach((split) => {
+          gsap.set(split.chars, { opacity: 0, x: "750%" });
+        });
+        gsap.set(".menu-col-links a", { opacity: 1 });
+        gsap.set(".menu-col-info p, .menu-col-info h3, .menu-col-info h6", { opacity: 0, y: 100 });
+        isAnimating.current = false;
+      },
+    });
+
+    tl.to(".menu-logo", { duration: 0.3, opacity: 0 })
+      .to(".menu-col-links a", { duration: 0.3, opacity: 0 }, "<")
+      .to(".menu-col-info p, .menu-col-info h3, .menu-col-info h6", { duration: 0.3, opacity: 0 }, "<")
+      .to("#menu-path", { duration: 0.5, attr: { d: CLOSE_BULGE }, ease: "power3.in" }, "<")
+      .to("#menu-path", { duration: 0.5, attr: { d: CLOSE_HIDDEN }, ease: "power3.out" });
+  };
+
+  const toggleMenu = () => {
+    if (isAnimating.current) return;
+    isAnimating.current = true;
+    isOpen.current = !isOpen.current;
+    setOpen(isOpen.current);
+    isOpen.current ? openMenu() : closeMenu();
+  };
+
   return (
-    <nav className="fixed  perspective-[1000px] top-5 w-[80vw] left-[10%] flex justify-between items-center z-[10000] px-[40px] backdrop-blur-[5px] transition-all duration-500 ease-out ">
-      {/* Logo */}
-      <svg
-        width="40"
-        height="80"
-        viewBox="0 0 520 286"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {/* SVG */}
-      </svg>
+    <nav className="nav" ref={container}>
+      <div className="nav-logo">
+        <a href="#"><svg width="60" height="96" viewBox="0 0 255 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M189.845 95.104C174.485 95.104 162.325 91.2213 153.365 83.456C144.49 75.6053 140.053 64.5547 140.053 50.304C140.053 41.6 141.461 33.9627 144.277 27.392C147.178 20.8213 151.232 15.5733 156.437 11.648C166.762 3.88267 180.373 0 197.269 0C208.192 0 219.114 1.49333 230.037 4.48C234.218 5.84533 236.309 9.216 236.309 14.592C236.309 21.9307 234.005 25.6 229.397 25.6C228.629 25.6 226.112 25.2587 221.845 24.576C217.578 23.8933 214.592 23.552 212.885 23.552C206.826 23.552 202.133 25.6853 198.805 29.952C195.562 34.1333 193.941 39.168 193.941 45.056C193.941 50.8587 195.477 55.9787 198.549 60.416C201.621 64.8533 205.802 67.1573 211.093 67.328C214.677 67.4987 221.034 67.584 230.165 67.584C234.602 67.584 237.034 69.6747 237.461 73.856C237.717 75.392 237.845 76.9707 237.845 78.592C237.845 80.128 237.717 81.7067 237.461 83.328C236.949 86.4 234.56 88.6613 230.293 90.112C226.026 91.4773 219.882 92.6293 211.861 93.568C203.84 94.592 196.501 95.104 189.845 95.104Z" fill="white"/>
+<path d="M46.336 9.59999C49.4933 13.5253 53.12 18.6027 57.216 24.832C61.312 30.976 64.1707 35.072 65.792 37.12C67.4133 39.168 68.6933 40.192 69.632 40.192C70.656 40.192 71.552 39.6373 72.32 38.528C73.088 37.4187 75.904 33.152 80.768 25.728C85.632 18.304 89.6427 12.672 92.8 8.83199C95.9573 4.90665 98.4747 2.90132 100.352 2.81599C102.229 2.73065 104.661 2.68799 107.648 2.68799C110.635 2.68799 114.133 2.77332 118.144 2.94398C122.155 3.11465 124.8 4.18132 126.08 6.14399C127.445 8.02132 128.256 10.7093 128.512 14.208C129.024 23.168 129.28 35.072 129.28 49.92C129.28 64.6827 128.896 76.3307 128.128 84.864C127.957 86.912 127.189 88.7467 125.824 90.368C124.459 91.9893 122.581 92.8 120.192 92.8C114.987 92.8853 109.184 92.928 102.784 92.928C96.4693 92.928 91.4347 92.8 87.68 92.544C86.3147 92.4587 85.0773 91.9467 83.968 91.008C82.944 89.984 82.3893 88.6613 82.304 87.04L81.536 65.92C81.4507 63.872 80.9813 62.72 80.128 62.464C79.36 62.208 78.6347 62.7627 77.952 64.128C73.4293 72.1493 67.7973 81.1093 61.056 91.008C59.4347 93.4827 57.3013 94.72 54.656 94.72C52.0107 94.72 49.8347 93.4827 48.128 91.008C45.1413 86.7413 40.064 77.696 32.896 63.872C32.4693 63.0187 31.9573 62.5067 31.36 62.336C30.848 62.1653 30.3787 62.3787 29.952 62.976C29.5253 63.5733 29.312 64.5547 29.312 65.92L28.672 87.04C28.5867 88.6613 27.8613 89.984 26.496 91.008C25.1307 91.9467 23.552 92.4587 21.76 92.544H9.088C6.784 92.4587 4.90667 91.648 3.456 90.112C2.09067 88.576 1.28 86.8267 1.024 84.864C0.341333 77.2693 0 65.4933 0 49.536C0 33.4933 0.213333 21.7173 0.64 14.208C0.896 10.624 1.70667 7.85065 3.072 5.88799C4.43733 3.92532 6.86933 2.94398 10.368 2.94398C28.288 2.94398 37.9733 3.07199 39.424 3.32799C40.8747 3.58399 43.1787 5.67466 46.336 9.59999Z" fill="white"/>
+<path d="M234.856 34.544C234.856 29.0212 239.333 24.544 244.856 24.544V24.544C250.379 24.544 254.856 29.0212 254.856 34.544V34.544C254.856 40.0669 250.379 44.544 244.856 44.544V44.544C239.333 44.544 234.856 40.0669 234.856 34.544V34.544Z" fill="#640073"/>
+</svg>
 
-      {/* Menu */}
-      <ul className="flex gap-8 text-sm font-medium text-white/50 uppercase">
-        <li>
-          <Link
-            className="
-      block
-      transition-transform
-      duration-700
-     hover:rotate-x-[360deg] hover:text-white
-    "
-            href="/"
-          >
-            Home
-          </Link>
-        </li>
+</a>
+      </div>
 
-        <li>
-          <Link
-            className="
-      block
-      transition-transform
-      duration-700
-    hover:rotate-x-[360deg] hover:text-white
-    "
-            href="/sobre"
-          >
-            Sobre
-          </Link>
-        </li>
+      <div className="nav-toggle" onClick={toggleMenu}>
+        <p className="nav-toggle-menu">Menu</p>
+        <p className="nav-toggle-close">fechar</p>
+      </div>
 
-        <li>
-          <Link
-            className="
-      block
-      transition-transform
-      duration-700
-     hover:rotate-x-[360deg] hover:text-white
-    "
-            href="/projetos"
-          >
-            Projetos
-          </Link>
-        </li>
+      <div className="menu">
+        <svg
+          className="menu-bg-svg"
+          viewBox="0 0 1131 861"
+          preserveAspectRatio="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path id="menu-path" fill="#272626" d={OPEN_HIDDEN} />
+        </svg>
 
-        <li>
-          <Link
-            className="
-      block
-      transition-transform
-      duration-700
-     hover:rotate-x-[360deg] hover:text-white
-    "
-            href="/servicos"
-          >
-            Serviços
-          </Link>
-        </li>
+        <div className="menu-logo">
+          <a href="#">
+            <svg className="logo-desktop" width="350" height="156" viewBox="0 0 255 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M189.845 95.104C174.485 95.104 162.325 91.2213 153.365 83.456C144.49 75.6053 140.053 64.5547 140.053 50.304C140.053 41.6 141.461 33.9627 144.277 27.392C147.178 20.8213 151.232 15.5733 156.437 11.648C166.762 3.88267 180.373 0 197.269 0C208.192 0 219.114 1.49333 230.037 4.48C234.218 5.84533 236.309 9.216 236.309 14.592C236.309 21.9307 234.005 25.6 229.397 25.6C228.629 25.6 226.112 25.2587 221.845 24.576C217.578 23.8933 214.592 23.552 212.885 23.552C206.826 23.552 202.133 25.6853 198.805 29.952C195.562 34.1333 193.941 39.168 193.941 45.056C193.941 50.8587 195.477 55.9787 198.549 60.416C201.621 64.8533 205.802 67.1573 211.093 67.328C214.677 67.4987 221.034 67.584 230.165 67.584C234.602 67.584 237.034 69.6747 237.461 73.856C237.717 75.392 237.845 76.9707 237.845 78.592C237.845 80.128 237.717 81.7067 237.461 83.328C236.949 86.4 234.56 88.6613 230.293 90.112C226.026 91.4773 219.882 92.6293 211.861 93.568C203.84 94.592 196.501 95.104 189.845 95.104Z" fill="white"/>
+<path d="M46.336 9.59999C49.4933 13.5253 53.12 18.6027 57.216 24.832C61.312 30.976 64.1707 35.072 65.792 37.12C67.4133 39.168 68.6933 40.192 69.632 40.192C70.656 40.192 71.552 39.6373 72.32 38.528C73.088 37.4187 75.904 33.152 80.768 25.728C85.632 18.304 89.6427 12.672 92.8 8.83199C95.9573 4.90665 98.4747 2.90132 100.352 2.81599C102.229 2.73065 104.661 2.68799 107.648 2.68799C110.635 2.68799 114.133 2.77332 118.144 2.94398C122.155 3.11465 124.8 4.18132 126.08 6.14399C127.445 8.02132 128.256 10.7093 128.512 14.208C129.024 23.168 129.28 35.072 129.28 49.92C129.28 64.6827 128.896 76.3307 128.128 84.864C127.957 86.912 127.189 88.7467 125.824 90.368C124.459 91.9893 122.581 92.8 120.192 92.8C114.987 92.8853 109.184 92.928 102.784 92.928C96.4693 92.928 91.4347 92.8 87.68 92.544C86.3147 92.4587 85.0773 91.9467 83.968 91.008C82.944 89.984 82.3893 88.6613 82.304 87.04L81.536 65.92C81.4507 63.872 80.9813 62.72 80.128 62.464C79.36 62.208 78.6347 62.7627 77.952 64.128C73.4293 72.1493 67.7973 81.1093 61.056 91.008C59.4347 93.4827 57.3013 94.72 54.656 94.72C52.0107 94.72 49.8347 93.4827 48.128 91.008C45.1413 86.7413 40.064 77.696 32.896 63.872C32.4693 63.0187 31.9573 62.5067 31.36 62.336C30.848 62.1653 30.3787 62.3787 29.952 62.976C29.5253 63.5733 29.312 64.5547 29.312 65.92L28.672 87.04C28.5867 88.6613 27.8613 89.984 26.496 91.008C25.1307 91.9467 23.552 92.4587 21.76 92.544H9.088C6.784 92.4587 4.90667 91.648 3.456 90.112C2.09067 88.576 1.28 86.8267 1.024 84.864C0.341333 77.2693 0 65.4933 0 49.536C0 33.4933 0.213333 21.7173 0.64 14.208C0.896 10.624 1.70667 7.85065 3.072 5.88799C4.43733 3.92532 6.86933 2.94398 10.368 2.94398C28.288 2.94398 37.9733 3.07199 39.424 3.32799C40.8747 3.58399 43.1787 5.67466 46.336 9.59999Z" fill="white"/>
+<path d="M234.856 34.544C234.856 29.0212 239.333 24.544 244.856 24.544V24.544C250.379 24.544 254.856 29.0212 254.856 34.544V34.544C254.856 40.0669 250.379 44.544 244.856 44.544V44.544C239.333 44.544 234.856 40.0669 234.856 34.544V34.544Z" fill="#640073"/>
+</svg>
 
-        <li>
-          <Link
-            className="
-      block
-      transition-transform
-      duration-700
-     hover:rotate-x-[360deg] hover:text-white
-    "
-            href="/contato"
-          >
-            Contato
-          </Link>
-        </li>
-      </ul>
+       <svg className="logo-mobile" width="60" height="96" viewBox="0 0 255 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M189.845 95.104C174.485 95.104 162.325 91.2213 153.365 83.456C144.49 75.6053 140.053 64.5547 140.053 50.304C140.053 41.6 141.461 33.9627 144.277 27.392C147.178 20.8213 151.232 15.5733 156.437 11.648C166.762 3.88267 180.373 0 197.269 0C208.192 0 219.114 1.49333 230.037 4.48C234.218 5.84533 236.309 9.216 236.309 14.592C236.309 21.9307 234.005 25.6 229.397 25.6C228.629 25.6 226.112 25.2587 221.845 24.576C217.578 23.8933 214.592 23.552 212.885 23.552C206.826 23.552 202.133 25.6853 198.805 29.952C195.562 34.1333 193.941 39.168 193.941 45.056C193.941 50.8587 195.477 55.9787 198.549 60.416C201.621 64.8533 205.802 67.1573 211.093 67.328C214.677 67.4987 221.034 67.584 230.165 67.584C234.602 67.584 237.034 69.6747 237.461 73.856C237.717 75.392 237.845 76.9707 237.845 78.592C237.845 80.128 237.717 81.7067 237.461 83.328C236.949 86.4 234.56 88.6613 230.293 90.112C226.026 91.4773 219.882 92.6293 211.861 93.568C203.84 94.592 196.501 95.104 189.845 95.104Z" fill="white"/>
+<path d="M46.336 9.59999C49.4933 13.5253 53.12 18.6027 57.216 24.832C61.312 30.976 64.1707 35.072 65.792 37.12C67.4133 39.168 68.6933 40.192 69.632 40.192C70.656 40.192 71.552 39.6373 72.32 38.528C73.088 37.4187 75.904 33.152 80.768 25.728C85.632 18.304 89.6427 12.672 92.8 8.83199C95.9573 4.90665 98.4747 2.90132 100.352 2.81599C102.229 2.73065 104.661 2.68799 107.648 2.68799C110.635 2.68799 114.133 2.77332 118.144 2.94398C122.155 3.11465 124.8 4.18132 126.08 6.14399C127.445 8.02132 128.256 10.7093 128.512 14.208C129.024 23.168 129.28 35.072 129.28 49.92C129.28 64.6827 128.896 76.3307 128.128 84.864C127.957 86.912 127.189 88.7467 125.824 90.368C124.459 91.9893 122.581 92.8 120.192 92.8C114.987 92.8853 109.184 92.928 102.784 92.928C96.4693 92.928 91.4347 92.8 87.68 92.544C86.3147 92.4587 85.0773 91.9467 83.968 91.008C82.944 89.984 82.3893 88.6613 82.304 87.04L81.536 65.92C81.4507 63.872 80.9813 62.72 80.128 62.464C79.36 62.208 78.6347 62.7627 77.952 64.128C73.4293 72.1493 67.7973 81.1093 61.056 91.008C59.4347 93.4827 57.3013 94.72 54.656 94.72C52.0107 94.72 49.8347 93.4827 48.128 91.008C45.1413 86.7413 40.064 77.696 32.896 63.872C32.4693 63.0187 31.9573 62.5067 31.36 62.336C30.848 62.1653 30.3787 62.3787 29.952 62.976C29.5253 63.5733 29.312 64.5547 29.312 65.92L28.672 87.04C28.5867 88.6613 27.8613 89.984 26.496 91.008C25.1307 91.9467 23.552 92.4587 21.76 92.544H9.088C6.784 92.4587 4.90667 91.648 3.456 90.112C2.09067 88.576 1.28 86.8267 1.024 84.864C0.341333 77.2693 0 65.4933 0 49.536C0 33.4933 0.213333 21.7173 0.64 14.208C0.896 10.624 1.70667 7.85065 3.072 5.88799C4.43733 3.92532 6.86933 2.94398 10.368 2.94398C28.288 2.94398 37.9733 3.07199 39.424 3.32799C40.8747 3.58399 43.1787 5.67466 46.336 9.59999Z" fill="white"/>
+<path d="M234.856 34.544C234.856 29.0212 239.333 24.544 244.856 24.544V24.544C250.379 24.544 254.856 29.0212 254.856 34.544V34.544C254.856 40.0669 250.379 44.544 244.856 44.544V44.544C239.333 44.544 234.856 40.0669 234.856 34.544V34.544Z" fill="#640073"/>
+</svg>
+</a>
+        </div>
 
-      <button>Vamos conversar</button>
+        <div className="menu-col menu-col-info">
+          <p>Entre em contato</p>
+          <h3 className="!w-[20ch]">mateusnascimentocelestino@gmail.com</h3>
+          <h3>(21) 98750-1858</h3>
+          <br />
+          <h6>Vila emil, Mesquita</h6>
+          <h6>Rio de janeiro, Brasil</h6>
+        </div>
+
+        <div className="menu-col menu-col-links">
+          <Link href="/">Home</Link>
+          <Link href="/sobre">Sobre</Link>
+          <Link href="/projetos">Projetos</Link>
+          <Link href="/servicos">Serviços</Link>
+          <Link href="/contato">Contato</Link>
+        </div>
+      </div>
     </nav>
   );
 }

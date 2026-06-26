@@ -21,7 +21,7 @@ export default function Cta() {
   return (
     <section className=" max-w-screen  flex flex-col justify-end bg-[#060608] overflow-hidden z-20 ">
         <div
-        className="fixed inset-0 pointer-events-none w-[100vw] "
+        className="absolute inset-0 pointer-events-none w-[100vw] "
         style={{
           backgroundImage:
             "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",
@@ -46,7 +46,7 @@ export default function Cta() {
         </span>
 
         <div className="flex flex-col justify-center items-center text-center mt-4">
-          <h2 className="text-white text-6xl font-extrabold leading-none tracking-tight mb-4">
+          <h2 className="text-white text-3xl md:text-6xl font-extrabold leading-none tracking-tight mb-4">
             Vamos transforma{" "}
             <span className="block">
               sua ideia em{" "}
@@ -55,7 +55,7 @@ export default function Cta() {
               </span>{" "}
             </span>
           </h2>
-          <p className="text-zinc-400 text-[1em] text-center w-[50ch]">
+          <p className="text-zinc-400 text-[1em] text-center md:w-[50ch]">
             Estou pronto para ajudar voce a criar soluções digitais modernas,
             funcionais e que geram resultados.
           </p>

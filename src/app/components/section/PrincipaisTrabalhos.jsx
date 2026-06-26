@@ -22,8 +22,8 @@ export default function PrincipaisTrabalhos() {
       <h1 className="absolute top-19 left-5 text-[6em] text-purple-700/10 font-semibold">
         04
       </h1>
-        <div
-        className="fixed inset-0 pointer-events-none w-[100vw]"
+            <div
+        className="absolute inset-0 pointer-events-none w-[100vw]"
         style={{
           backgroundImage:
             "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",
@@ -32,7 +32,7 @@ export default function PrincipaisTrabalhos() {
       />
 
       <div className="max-w-7xl mx-auto px-6">
-        <h2 className="text-4xl font-medium flex flex-col items-start justify-start text-white w-[22ch] mb-12 mt-3">
+        <h2 className=" text-4xl md:text-4xl font-medium flex flex-col items-start justify-start text-white md:w-[22ch] mb-12 mt-3">
           <span className="text-purple-500  mb-[5px] text-[.4em] hidden md:block pb-3 decoration-bullet">
             {" "}
             • Principais Trabalhos
@@ -56,7 +56,7 @@ export default function PrincipaisTrabalhos() {
             >
               <div
                 key={project._id}
-                className="transition-all duration-300 rounded-3xl overflow-hidden w-[330px] flex flex-col items-center justify-center backdrop-blur-[5px] border border-zinc-900 bg-white/1 hover:translate-y-[-10px] hover:shadow-[0_0_20px_rgba(168,85,247,0.2),0_0_40px_rgba(59,130,246,0.15),0_0_60px_rgba(236,72,153,0.1)] relative "
+                className="transition-all duration-300 rounded-3xl overflow-hidden w-[280px] md:w-[330px] flex flex-col items-center justify-center backdrop-blur-[5px] border border-zinc-900 bg-white/1 hover:translate-y-[-10px] hover:shadow-[0_0_20px_rgba(168,85,247,0.2),0_0_40px_rgba(59,130,246,0.15),0_0_60px_rgba(236,72,153,0.1)] relative "
               >
                 <img
                   src={project.coverImage}
