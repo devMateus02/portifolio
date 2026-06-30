@@ -1,6 +1,7 @@
 "use client"
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import MagneticButton from "../MagneticButton";
 export default function Cta() {
   const [activePixels, setActivePixels] = useState([]);
 
@@ -61,27 +62,9 @@ export default function Cta() {
           </p>
         </div>
 
-        <Link
-          href="/contato"
-          className="group relative overflow-hidden px-8 py-4 border border-purple-700 bg-purple-950/10 text-white mt-8 inline-block text-[.9em] font-medium rounded-lg mb-8"
-        >
-          Vamos conversar
-          <span className="absolute left-0 bottom-0 bg-gradient-to-r from-purple-600 to-purple-400 w-4 h-2 transition-all duration-800 ease-out group-hover:w-full" />
-          <div
-            className="
-    absolute
-    top-0
-    right-5
-
-    w-[300px]
-    h-[300px]
-
-    bg-[radial-gradient(circle,rgba(168,85,247,0.25)_0%,transparent_70%)]
-
-    pointer-events-none
-  "
-          />
-        </Link>
+        <div className="rv inline-block my-7">
+  <MagneticButton href="/contato">Entrar em contato</MagneticButton>
+</div>
 
         <span
           className={`absolute top-[30px] left-[36px] w-4 h-4 border-l-2 border-t-2 border-purple-700`}

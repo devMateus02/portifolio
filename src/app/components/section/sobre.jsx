@@ -3,7 +3,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import LogoMC3D from "../LogoMC3D";
-
+import MagneticButton from "../MagneticButton";
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const PARAGRAFO_PARTES = [
@@ -189,13 +189,10 @@ export default function Sobre() {
         {/* botão */}
         <div className="relative mt-6 group">
           <div className="absolute -inset-1 rounded-xl bg-purple-600/40 blur-xl opacity-60 group-hover:opacity-100 transition-opacity" />
-          <button className="relative inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-b from-purple-600 to-purple-800 text-white font-semibold tracking-tight cursor-pointer border border-purple-400/30">
-            Conhecer mais sobre mim
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 transition-transform group-hover:translate-x-1">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-            </svg>
-          </button>
-        </div>
+          
+        </div><div className="rv inline-block">
+  <MagneticButton href="/sobre">Entrar em contato</MagneticButton>
+</div>
       </div>
 
 

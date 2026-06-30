@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SmoothScroll from "./components/SmoothScroll";
+import TransitionProvider from "./components/TransitionProvider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -23,10 +24,11 @@ export default function RootLayout({ children }) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col select-none">
-        <SmoothScroll>
-
+       <TransitionProvider>
+         <SmoothScroll>
         {children}
         </SmoothScroll>
+       </TransitionProvider>
 
       </body>
     </html>

@@ -164,7 +164,7 @@ export default function PhotoReveal({ src }) {
       onTouchStart={onTouch}
       onTouchMove={onTouch}
       onTouchEnd={onEnd}
-      style={{ width: "100%", height: "100%", minHeight: 480, touchAction: "none" }}
+      style={{ height: "80%", minHeight: 480, touchAction: "none" }}
     >
       <Canvas shadows camera={{ position: [0, 0, 7], fov: 40 }} gl={{ antialias: true }}>
         <color attach="background" args={["#0b0b10"]} />

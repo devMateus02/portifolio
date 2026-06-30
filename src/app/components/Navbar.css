@@ -251,3 +251,12 @@ color: #ffffff;
   transform: scale(1);
   transition: opacity 0.3s, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+/* Evita o flash dos textos do menu antes do GSAP rodar.
+   Ficam escondidos enquanto o menu não está aberto. */
+.menu:not(.is-open) .menu-col-links a,
+.menu:not(.is-open) .menu-col-info p,
+.menu:not(.is-open) .menu-col-info h3,
+.menu:not(.is-open) .menu-col-info h6 {
+  opacity: 0;
+}
