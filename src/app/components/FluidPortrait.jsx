@@ -2,7 +2,7 @@
 import { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-
+import { RevealSignal } from "@/app/components/RevealSignal";
 const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
 const TRAIL = isMobile ? 20 : 60;   // mobile leve, desktop completo
 const RADIUS = isMobile ?0.06 :0.10;

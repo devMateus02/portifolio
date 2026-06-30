@@ -27,7 +27,7 @@ export default function ScrollRevealText({ as: Tag = "p", className = "", childr
       start: "top 85%",
       end: "bottom 50%",
       scrub: .8,
-      markers: true,
+    
     },
   }
 );
