@@ -224,7 +224,7 @@ export default function ServicosPage() {
           <span className="hero-tag block font-mono text-[13px] text-purple-500/90 mb-5">serviços</span>
            <h1 className="hero-title text-5xl font-extrabold tracking-tight leading-none">Serviços</h1>
 
-                       <ScrambleText
+                       {/* <ScrambleText
              className="mt-7 md:max-w-[640px] text-[clamp(20px,2.4vw,30px)] leading-snug text-neutral-300"
              stagger={0.02}
              cycles={14}
@@ -233,7 +233,7 @@ export default function ServicosPage() {
                { text: "sob medida,", className: "text-purple-400" },
                { text: " para resolver problemas reais do seu negócio." },
              ]}
-           />
+           /> */}
           
           </div>
         </section>

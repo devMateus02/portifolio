@@ -183,7 +183,7 @@ export default function SobrePage() {
            
             <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-10 lg:gap-5 items-center">
               <div>
-              
+{/*               
                 <ScrambleText
   className="mt-7 md:max-w-[640px] text-[clamp(20px,2.4vw,30px)] leading-snug text-neutral-300"
   stagger={0.02}
@@ -193,7 +193,7 @@ export default function SobrePage() {
     { text: "sistemas web completos", className: "text-purple-400" },
     { text: " para empresas. Mais de 3 anos transformando ideias em produtos modernos, performáticos e pensados para gerar resultados reais." },
   ]}
-/>
+/> */}
                 <div className="rv mt-8 inline-flex items-center gap-3 rounded-[10px] border border-green-400/25 bg-green-400/5 px-[18px] py-3 font-mono text-[13px] text-green-300">
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-60" />
