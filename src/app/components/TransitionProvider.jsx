@@ -7,14 +7,24 @@ import { gsap } from "gsap";
 const TransitionContext = createContext(null);
 export const useTransition = () => useContext(TransitionContext);
 
-// densidade do grid de blocos
-const COLS = 8;
-const ROWS = 5;
+// densidade do grid de blocos (quanto maior, menores os quadrados)
+const COLS = 20;
+const ROWS = 20;
 const TOTAL = COLS * ROWS;
 
 // tempo máximo (ms) que o overlay fica coberto esperando o canvas avisar.
 // páginas sem canvas (que nunca chamam revealNow) revelam por aqui.
-const FALLBACK_MS = 1200;
+const FALLBACK_MS = 1000;
+
+// embaralha um array (Fisher-Yates) sem mutar o original
+const shuffle = (arr) => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
 
 export default function TransitionProvider({ children }) {
   const router = useRouter();
@@ -26,10 +36,7 @@ export default function TransitionProvider({ children }) {
   const pendingReveal = useRef(false); // estamos cobertos, esperando p/ revelar?
   const revealed = useRef(false); // já revelamos nesta transição?
 
-  const getOrdered = () =>
-    blocks.current
-      .filter(Boolean)
-      .sort((a, b) => Number(a.dataset.order) - Number(b.dataset.order));
+  const getBlocks = () => blocks.current.filter(Boolean);
 
   // executa a revelação (só uma vez por transição)
   const doReveal = useCallback(() => {
@@ -37,12 +44,12 @@ export default function TransitionProvider({ children }) {
     revealed.current = true;
     pendingReveal.current = false;
 
-    const ordered = getOrdered();
-    gsap.to(ordered, {
+    const randomized = shuffle(getBlocks());
+    gsap.to(randomized, {
       scaleY: 0,
-      duration: 0.32,
+      duration: 0.22,
       ease: "power2.inOut",
-      stagger: { each: 0.012, from: "end" },
+      stagger: { amount: 0.80 },
       onComplete: () => {
         gsap.set(overlay.current, { pointerEvents: "none" });
         animating.current = false;
@@ -63,15 +70,15 @@ export default function TransitionProvider({ children }) {
       revealed.current = false;
       pendingReveal.current = false;
 
-      const ordered = getOrdered();
+      const randomized = shuffle(getBlocks());
       gsap.set(overlay.current, { pointerEvents: "all" });
-      gsap.set(ordered, { transformOrigin: "bottom" });
+      gsap.set(randomized, { transformOrigin: "bottom" });
 
-      gsap.to(ordered, {
+      gsap.to(randomized, {
         scaleY: 1,
-        duration: 0.32,
+        duration: 0.22,
         ease: "power2.inOut",
-        stagger: { each: 0.012, from: "start" },
+        stagger: { amount: 0.80 },
         onComplete: () => {
           // tela coberta: agora pode navegar e começar a esperar o canvas
           pendingReveal.current = true;
@@ -109,29 +116,24 @@ export default function TransitionProvider({ children }) {
             gridTemplateRows: `repeat(${ROWS}, 1fr)`,
           }}
         >
-          {Array.from({ length: TOTAL }).map((_, i) => {
-            const col = i % COLS;
-            const row = Math.floor(i / COLS);
-            return (
-              <div
-                key={i}
-                ref={(el) => (blocks.current[i] = el)}
-                data-order={col + row}
-                style={{
-                  transform: "scaleY(0)",
-                  transformOrigin: "bottom",
-                  willChange: "transform",
-                  backfaceVisibility: "hidden",
-                  // overlap p/ não sobrar fresta entre blocos
-                  marginTop: "-1px",
-                  marginLeft: "-1px",
-                  width: "calc(100% + 2px)",
-                  height: "calc(100% + 2px)",
-                }}
-                className="bg-purple-600"
-              />
-            );
-          })}
+          {Array.from({ length: TOTAL }).map((_, i) => (
+            <div
+              key={i}
+              ref={(el) => (blocks.current[i] = el)}
+              style={{
+                transform: "scaleY(0)",
+                transformOrigin: "bottom",
+                willChange: "transform",
+                backfaceVisibility: "hidden",
+                // overlap p/ não sobrar fresta entre blocos
+                marginTop: "-1px",
+                marginLeft: "-1px",
+                width: "calc(100% + 2px)",
+                height: "calc(100% + 2px)",
+              }}
+              className="bg-purple-600"
+            />
+          ))}
         </div>
       </div>
     </TransitionContext.Provider>

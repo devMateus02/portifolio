@@ -247,8 +247,8 @@ const dyTop = (H - dh) / 2 + (mob ? 90 : 70);
 }
 
 export default function FluidPortrait({
-  baseSrc = "/hero_camada.png",
-  revealSrc = "/hero_base.png",
+  baseSrc = "/hero_camada.webp",
+  revealSrc = "/hero_base.webp",
   debug = false,
 }) {
   const mobile = typeof window !== "undefined" && window.innerWidth < 1024;
