@@ -19,8 +19,16 @@ function useIsMobile(breakpoint = 768) {
   return isMobile;
 }
 
+/*
+OTIM: antes cada cubo era um <mesh> próprio → ~400 draw calls por frame
+(e ~800 com sombras, porque o shadow pass redesenha tudo). Agora é UM
+InstancedMesh: 1 draw call para o grid inteiro. O recorte da foto por
+cubo, que antes era feito com UVs únicos por geometria, virou um
+atributo por instância (uvRect) aplicado com um micro-patch no shader.
+Visual 100% idêntico.
+*/
 function TilesMesh({ texture, pointer, aspect, q }) {
-  const groupRef = useRef();
+  const instRef = useRef();
   const { viewport } = useThree();
 
   const cols = q.grid;
@@ -29,54 +37,84 @@ function TilesMesh({ texture, pointer, aspect, q }) {
   const planeH = PLANE / aspect;
   const cellW = planeW / cols;
   const cellH = planeH / rows;
+  const count = cols * rows;
 
-  const tiles = useMemo(() => {
+  // geometria única compartilhada por todas as instâncias
+  const { geometry, tiles } = useMemo(() => {
+    const g = new THREE.BoxGeometry(cellW * GAP, cellH * GAP, cellW * 0.05);
+    // face frontal mantém uv 0..1 (o uvRect por instância recorta a região);
+    // faces laterais colapsam pro centro da região — igual ao original
+    const uv = g.attributes.uv;
+    for (let f = 0; f < 16; f++) uv.setXY(f, 0.5, 0.5);
+    for (let f = 20; f < 24; f++) uv.setXY(f, 0.5, 0.5);
+    uv.needsUpdate = true;
+
     const arr = [];
+    const uvRect = new Float32Array(count * 4);
+    let i = 0;
     for (let x = 0; x < cols; x++) {
       for (let y = 0; y < rows; y++) {
         const px = (x - cols / 2 + 0.5) * cellW;
         const py = (y - rows / 2 + 0.5) * cellH;
-
-        const g = new THREE.BoxGeometry(cellW * GAP, cellH * GAP, cellW * 0.05);
-        const u0 = x / cols, u1 = (x + 1) / cols;
-        const v0 = y / rows, v1 = (y + 1) / rows;
-        const uv = g.attributes.uv;
-        uv.setXY(16, u0, v1); uv.setXY(17, u1, v1);
-        uv.setXY(18, u0, v0); uv.setXY(19, u1, v0);
-        const uc = (u0 + u1) / 2, vc = (v0 + v1) / 2;
-        for (let f = 0; f < 16; f++) uv.setXY(f, uc, vc);
-        for (let f = 20; f < 24; f++) uv.setXY(f, uc, vc);
-        uv.needsUpdate = true;
-
-        arr.push({ geometry: g, baseX: px, baseY: py, z: 0, key: `${x}-${y}` });
+        // região da foto desta instância: offset (u0,v0) + escala (1/cols, 1/rows)
+        uvRect[i * 4] = x / cols;
+        uvRect[i * 4 + 1] = y / rows;
+        uvRect[i * 4 + 2] = 1 / cols;
+        uvRect[i * 4 + 3] = 1 / rows;
+        arr.push({ baseX: px, baseY: py, z: 0 });
+        i++;
       }
     }
-    return arr;
-  }, [cols, rows, cellW, cellH]);
+    g.setAttribute("uvRect", new THREE.InstancedBufferAttribute(uvRect, 4));
+    return { geometry: g, tiles: arr };
+  }, [cols, rows, cellW, cellH, count]);
 
   // material mais barato no mobile (Basic = sem cálculo de luz)
   const mat = useMemo(() => {
-    return q.lights
+    const m = q.lights
       ? new THREE.MeshStandardMaterial({ map: texture, roughness: 0.75, metalness: 0 })
       : new THREE.MeshBasicMaterial({ map: texture });
+
+    // OTIM: patch mínimo no shader pra aplicar o uvRect por instância.
+    // ATENÇÃO: no onBeforeCompile os #include ainda NÃO foram expandidos,
+    // então não dá pra procurar "vMapUv" no código — detectamos pela
+    // versão: r151+ usa vMapUv, anteriores usam vUv.
+    m.onBeforeCompile = (shader) => {
+      shader.vertexShader = shader.vertexShader.replace(
+        "#include <common>",
+        "attribute vec4 uvRect;\n#include <common>"
+      );
+      const newUv = parseInt(THREE.REVISION, 10) >= 151;
+      shader.vertexShader = shader.vertexShader.replace(
+        "#include <uv_vertex>",
+        newUv
+          ? "#include <uv_vertex>\n#ifdef USE_MAP\n\tvMapUv = uvRect.xy + vMapUv * uvRect.zw;\n#endif"
+          : "#include <uv_vertex>\n#ifdef USE_UV\n\tvUv = uvRect.xy + vUv * uvRect.zw;\n#endif"
+      );
+    };
+    m.customProgramCacheKey = () => "photo-reveal-uv-rect";
+    return m;
   }, [texture, q.lights]);
 
   // libera memória ao desmontar
   useEffect(() => {
     return () => {
-      tiles.forEach((t) => t.geometry.dispose());
+      geometry.dispose();
       mat.dispose();
     };
-  }, [tiles, mat]);
+  }, [geometry, mat]);
+
+  // dummy reutilizado pra compor as matrizes das instâncias (zero alocação/frame)
+  const dummy = useMemo(() => new THREE.Object3D(), []);
 
   useFrame(({ clock }) => {
-    const grp = groupRef.current;
-    if (!grp) return;
+    const inst = instRef.current;
+    if (!inst) return;
     const t = clock.getElapsedTime();
     const mx = pointer.current.active ? (pointer.current.x * viewport.width) / 2 : 99999;
     const my = pointer.current.active ? (pointer.current.y * viewport.height) / 2 : 99999;
 
-    grp.children.forEach((mesh, i) => {
+    for (let i = 0; i < tiles.length; i++) {
       const tile = tiles[i];
       const idle =
         Math.sin(tile.baseX * 1.2 + t * 1.1) *
@@ -87,23 +125,24 @@ function TilesMesh({ texture, pointer, aspect, q }) {
       const eased = inf * inf * (3 - 2 * inf);
       const target = idle + eased * q.lift;
       tile.z += (target - tile.z) * DAMP;
-      mesh.position.z = tile.z;
-    });
+
+      dummy.position.set(tile.baseX, tile.baseY, tile.z);
+      dummy.updateMatrix();
+      inst.setMatrixAt(i, dummy.matrix);
+    }
+    inst.instanceMatrix.needsUpdate = true;
   });
 
   return (
-    <group ref={groupRef}>
-      {tiles.map((tile) => (
-        <mesh
-          key={tile.key}
-          geometry={tile.geometry}
-          material={mat}
-          position={[tile.baseX, tile.baseY, 0]}
-          castShadow={q.lights}
-          receiveShadow={q.lights}
-        />
-      ))}
-    </group>
+    <instancedMesh
+      ref={instRef}
+      args={[geometry, mat, count]}
+      castShadow={q.lights}
+      receiveShadow={q.lights}
+      // OTIM: com as instâncias se movendo em z, desligar o culling evita
+      // recomputar bounding volumes (o grid ocupa a tela toda mesmo)
+      frustumCulled={false}
+    />
   );
 }
 
@@ -147,14 +186,46 @@ export default function PhotoReveal({ src }) {
 
   useEffect(() => {
     if (isMobile === null) return; // espera detectar antes de carregar a textura
+    let alive = true; // OTIM: não seta state após unmount
     const loader = new THREE.TextureLoader();
     loader.setCrossOrigin("anonymous");
     loader.load(src, (t) => {
+      if (!alive) { t.dispose(); return; }
       t.colorSpace = THREE.SRGBColorSpace;
       setAspect(t.image.width / t.image.height);
       setTexture(t);
     });
+    return () => { alive = false; };
   }, [src, isMobile]);
+
+  // OTIM: libera a textura da GPU quando trocar ou desmontar
+  useEffect(() => {
+    return () => texture?.dispose?.();
+  }, [texture]);
+
+  // OTIM: pausa o render loop quando o componente sai do viewport ou a
+  // aba fica oculta — a onda idle roda contínua, então isso é o que
+  // impede o grid de consumir GPU durante o scroll do resto da página
+  const [frameloop, setFrameloop] = useState("always");
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    let visible = true;
+
+    const apply = () =>
+      setFrameloop(visible && document.visibilityState === "visible" ? "always" : "never");
+
+    const io = new IntersectionObserver(
+      ([entry]) => { visible = entry.isIntersecting; apply(); },
+      { threshold: 0 }
+    );
+    io.observe(el);
+    document.addEventListener("visibilitychange", apply);
+    return () => {
+      io.disconnect();
+      document.removeEventListener("visibilitychange", apply);
+    };
+  }, [isMobile]); // re-observa depois que o placeholder vira canvas
 
   function updateFromClient(cx, cy) {
     const el = wrapRef.current;
@@ -184,8 +255,9 @@ export default function PhotoReveal({ src }) {
     >
       <Canvas
         shadows={q.lights}
+        frameloop={frameloop}
         camera={{ position: [0, 0, 7], fov: 40 }}
-        gl={{ antialias: !isMobile, powerPreference: "high-performance" }}
+        gl={{ antialias: !isMobile, powerPreference: "high-performance", stencil: false }}
         dpr={isMobile ? [1, 1] : [1, 1.5]}
       >
         <color attach="background" args={["#0b0b10"]} />

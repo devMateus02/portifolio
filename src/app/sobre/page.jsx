@@ -4,9 +4,8 @@ import { useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import Image from "next/image";
-import Link from "next/link";
-import PhotoReveal from "../components/PhotoReveal";
+
+import PhotoReveal from "../components/3d/PhotoReveal";
 import ScrambleText from "../components/gsapcomponets/ScrambleText";
 import ScrollRevealText from "../components/gsapcomponets/ScrollRevealText";
 import Marquee from "../components/gsapcomponets/Marquee";

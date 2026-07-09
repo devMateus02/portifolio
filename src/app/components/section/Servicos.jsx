@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Cta from "./Cta";
 import Footer from "./Footer";
-
+import TransitionLink from "../TransitionLink";
 function PixelIcon({ color, hovered }) {
   const [activePixels, setActivePixels] = useState([]);
 
@@ -205,8 +205,8 @@ export default function Servicos() {
               className={`hidden group-hover:block absolute bottom-[-22px] right-[-6px] w-3 h-3 border-r-2 border-b-2`}
             />
 
-    <Link
-  href="/Servicos"
+    <TransitionLink
+  href="/servicos"
   className="
     group
     relative
@@ -238,7 +238,7 @@ export default function Servicos() {
   <span className="relative z-10">
     Vamos conversar
   </span>
-</Link>
+</TransitionLink>
           </div>
         </div>
       </div>

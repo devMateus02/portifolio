@@ -82,15 +82,58 @@ nav{
   left: 5rem;
 }
 
-.nav-toggle{
-  position:absolute;
-  top: 2rem;
-  right: 2rem;
-  color: #ffffff;
+.nav-toggle {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  gap: 0;
+  background: rgba(168, 85, 247, 0.06);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  border-radius: 10px;
   cursor: pointer;
-  z-index: 10000000;
-  padding: .5rem;
+  transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
 }
+
+/* cantoneiras estilo HUD nos cantos */
+.nav-toggle::before,
+.nav-toggle::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid #a855f7;
+  transition: all 0.3s ease;
+}
+.nav-toggle::before { top: -4px; left: -4px; border-right: 0; border-bottom: 0; }
+.nav-toggle::after  { bottom: -4px; right: -4px; border-left: 0; border-top: 0; }
+
+.nav-toggle:hover {
+  border-color: rgba(168, 85, 247, 0.9);
+  background: rgba(168, 85, 247, 0.12);
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.45),
+              inset 0 0 12px rgba(168, 85, 247, 0.15);
+}
+.nav-toggle:hover::before { top: -7px; left: -7px; }
+.nav-toggle:hover::after  { bottom: -7px; right: -7px; }
+
+/* as duas linhas */
+.nav-toggle-line {
+  position: absolute;
+  width: 22px;
+  height: 2px;
+  background: #c084fc;
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.8);
+  transition: transform 0.35s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.nav-toggle-line:nth-child(1) { transform: translateY(-4px); }
+.nav-toggle-line:nth-child(2) { transform: translateY(4px); }
+
+/* estado aberto: vira X */
+.nav-toggle.is-open .nav-toggle-line:nth-child(1) { transform: rotate(45deg); }
+.nav-toggle.is-open .nav-toggle-line:nth-child(2) { transform: rotate(-45deg); }
 
 .nav-logo, .nav-toggle{
   padding: 0.5rem;

@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import Link from "next/link";
 import { gsap } from "gsap";
-
+import TransitionLink from "./TransitionLink";
 export default function MagneticButton({ href = "#", children, className = "" }) {
   const btn = useRef(null);
   const fill = useRef(null);
@@ -35,12 +35,12 @@ export default function MagneticButton({ href = "#", children, className = "" })
   };
 
   return (
-    <Link
+    <TransitionLink
       ref={btn}
       href={href}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
-      className={`group relative inline-flex items-center gap-3 overflow-hidden rounded-2xl border border-purple-300/30 bg-gradient-to-b from-purple-600 to-purple-800 px-9 py-[18px] font-semibold text-white shadow-[0_10px_40px_-10px_rgba(168,85,247,0.65)] transition-shadow duration-300 hover:shadow-[0_15px_55px_-8px_rgba(168,85,247,0.9)] ${className}`}
+      className={`group relative inline-flex items-center gap-3 overflow-hidden rounded-2xl border border-purple-300/30 bg-gradient-to-b from-purple-600 to-purple-800 text-[12px]  px-4 py-[12px] md:text-[16px] md:px-9 md:py-[18px] font-semibold md:font-semibold text-white shadow-[0_10px_40px_-10px_rgba(168,85,247,0.65)] transition-shadow duration-300 hover:shadow-[0_15px_55px_-8px_rgba(168,85,247,0.9)] ${className}`}
     >
       {/* brilho que varre no hover */}
       <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
@@ -62,6 +62,6 @@ export default function MagneticButton({ href = "#", children, className = "" })
           <path d="M5 12h14M13 5l7 7-7 7" />
         </svg>
       </span>
-    </Link>
+    </TransitionLink>
   );
 }

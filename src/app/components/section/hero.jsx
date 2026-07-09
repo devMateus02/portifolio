@@ -1,9 +1,8 @@
 "use client";
 import { useRef } from "react";
-import RibbonScene from "../RibbonScene";
-import FluidPortrait from "../FluidPortrait";
+import FluidPortrait from "../3d/FluidPortrait";
 import MagneticButton from "../MagneticButton";
-
+import TransitionLink from "../TransitionLink";
 export default function Hero() {
   const sectionRef = useRef(null);
 
@@ -44,7 +43,7 @@ export default function Hero() {
        
         </p>
 
- <div className="rv inline-block absolute md:top-[30%] md:right-[15%] z-50">
+ <div className="rv inline-block absolute bottom-10 right-[26%] md:top-[30%] md:right-[15%] z-50">
   <MagneticButton href="/contato">Ver projetos</MagneticButton>
 </div>
     

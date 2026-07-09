@@ -1,6 +1,6 @@
 "use client";
 
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Center } from "@react-three/drei";
 import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 import { useMemo, useRef, useEffect, useState } from "react";
@@ -18,7 +18,7 @@ function useIsMobile(breakpoint = 768) {
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < breakpoint);
     check();
-    window.addEventListener("resize", check);
+    window.addEventListener("resize", check, { passive: true });
     return () => window.removeEventListener("resize", check);
   }, [breakpoint]);
 
@@ -48,8 +48,11 @@ function MCLogoMesh({ scale, position, rotation }) {
                 depth: 45,
                 bevelEnabled: true,
                 bevelThickness: 4.5,
+                // OTIM: bevel de 2.2 unidades é fino demais pra 8 segmentos
+                // fazerem diferença — 4 corta a malha pela metade sem
+                // mudança visível (se notar algo, volta pra 8)
                 bevelSize: 2.2,
-                bevelSegments: 8,
+                bevelSegments: 4,
               },
             ]}
           />
@@ -58,7 +61,9 @@ function MCLogoMesh({ scale, position, rotation }) {
       ))}
 
       <mesh position={[499, 120, 42]} castShadow>
-        <sphereGeometry args={[20, 48, 108]} />
+        {/* OTIM: era [20, 48, 108] (~10k triângulos) — quase certeza que o 108
+            era typo; 32x32 é visualmente idêntico pra uma esfera desse tamanho */}
+        <sphereGeometry args={[20, 32, 32]} />
         <meshStandardMaterial
           color="#5905b3"
           emissive="#5905b3"
@@ -74,21 +79,33 @@ function MCLogoMesh({ scale, position, rotation }) {
 function MouseFollow({ children }) {
   const group = useRef();
   const mouse = useRef({ x: 0, y: 0 });
+  // OTIM: com frameloop="demand", o invalidate() é o que pede novos frames
+  const { invalidate } = useThree();
 
   useEffect(() => {
     const handleMove = (e) => {
       mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      invalidate(); // acorda o render loop
     };
-    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mousemove", handleMove, { passive: true });
     return () => window.removeEventListener("mousemove", handleMove);
-  }, []);
+  }, [invalidate]);
 
   useFrame(() => {
     const targetRotY = mouse.current.x * 0.15;
     const targetRotX = -mouse.current.y * 0.15;
     group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, targetRotY, 0.08);
     group.current.rotation.x = THREE.MathUtils.lerp(group.current.rotation.x, targetRotX, 0.05);
+
+    // OTIM: enquanto o lerp não convergiu, pede mais um frame;
+    // quando assenta, o loop dorme sozinho (0% de GPU em repouso)
+    if (
+      Math.abs(group.current.rotation.y - targetRotY) > 0.0005 ||
+      Math.abs(group.current.rotation.x - targetRotX) > 0.0005
+    ) {
+      invalidate();
+    }
   });
 
   return <group ref={group}>{children}</group>;
@@ -111,10 +128,44 @@ export default function LogoMC3D() {
         cameraPos: [0, 4, 8],
       };
 
+  // OTIM: fora do viewport / aba oculta, o loop trava em "never".
+  // Visível, usa "demand": só renderiza quando o mouse mexe ou o
+  // lerp ainda está assentando — em repouso a cena é estática mesmo.
+  const wrapRef = useRef(null);
+  const [frameloop, setFrameloop] = useState("demand");
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    let visible = true;
+
+    const apply = () =>
+      setFrameloop(visible && document.visibilityState === "visible" ? "demand" : "never");
+
+    const io = new IntersectionObserver(
+      ([entry]) => { visible = entry.isIntersecting; apply(); },
+      { threshold: 0 }
+    );
+    io.observe(el);
+    document.addEventListener("visibilitychange", apply);
+    return () => {
+      io.disconnect();
+      document.removeEventListener("visibilitychange", apply);
+    };
+  }, []);
+
   return (
-    <div className="w-full h-full">
+    <div ref={wrapRef} className="w-full h-full">
       {/* 1️⃣ ativa sombras no renderer */}
-      <Canvas shadows camera={{ position: config.cameraPos, fov: 45 }}>
+      <Canvas
+        shadows
+        frameloop={frameloop}
+        camera={{ position: config.cameraPos, fov: 45 }}
+        // OTIM: dpr máx 1.5 (era o padrão até 2) — ~44% menos fragmentos em
+        // tela retina; antialias fica LIGADO porque aqui tem arestas 3D reais
+        dpr={[1, 1.5]}
+        gl={{ antialias: true, stencil: false, powerPreference: "high-performance" }}
+      >
         <ambientLight intensity={1} />
 
         {/* 2️⃣ luz que projeta sombra (castShadow) */}
@@ -122,8 +173,10 @@ export default function LogoMC3D() {
           position={[3, 8, 6]}
           intensity={2}
           castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
+          // OTIM: 1024 é suficiente pra uma sombra suave no chão
+          // (2048 = 4x mais memória/preenchimento por nada aqui)
+          shadow-mapSize-width={1024}
+          shadow-mapSize-height={1024}
           shadow-camera-far={10}
           shadow-camera-left={-3}
           shadow-camera-right={3}

@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import LogoMC3D from "../LogoMC3D";
+import LogoMC3D from "../3d/LogoMC3D";
 import MagneticButton from "../MagneticButton";
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
